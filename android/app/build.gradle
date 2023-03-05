@@ -1,0 +1,85 @@
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterRoot = localProperties.getProperty('flutter.sdk')
+if (flutterRoot == null) {
+    throw new FileNotFoundException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+def keystoreProperties = null
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties = new Properties()
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+apply plugin: 'com.android.application'
+apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
+
+android {
+    packagingOptions {
+        jniLibs {
+            // Enable native library compression. Disabling it can decrease
+            // installation size on disk, but not when the code for all
+            // architectures is in one APK. When we start splitting APKs,
+            // we should absolutely remove this line.
+            // Recommended reading: https://stackoverflow.com/questions/62440105/apk-size-increased-35mb-when-bumping-min-sdk-from-21-to-24/63417612#63417612
+            useLegacyPackaging true
+        }
+    }
+
+    compileSdk 31
+
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+
+    defaultConfig {
+        applicationId "co.prestosole.clima"
+        minSdk 23
+        targetSdk 30
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+
+    }
+
+    if (keystoreProperties != null) {
+        signingConfigs {
+            release {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile keystoreProperties['storeFile']
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig keystoreProperties == null ? signingConfigs.debug : keystoreProperties.release
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+
+}

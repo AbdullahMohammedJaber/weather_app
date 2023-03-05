@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    paths-ignore:
+      - '*.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - .github/PULL_REQUEST_TEMPLATE.md
+      - 'fastlane/**'
+  pull_request:
+    paths-ignore:
+      - '*.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - .github/PULL_REQUEST_TEMPLATE.md
+      - 'fastlane/**'
+
+permissions:
+  contents: read
+
+jobs:
+  check-code-style-and-run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check license headers
+        run: ./check_license_headers
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.0.x'
+          cache: true
+
+      - name: Check formatting
+        run: flutter format --set-exit-if-changed --dry-run .
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Run code generation
+        run: flutter pub run build_runner build
+
+      - name: Analyze source code
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
